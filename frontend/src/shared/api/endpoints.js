@@ -50,3 +50,14 @@ export const createAllocationRule = (data) => client.post('/allocation-rules', d
 export const updateAllocationRule = (id, data) => client.patch(`/allocation-rules/${id}`, data).then(r => r.data)
 export const deleteAllocationRule = (id) => client.delete(`/allocation-rules/${id}`)
 export const calculateAllocation = (amount) => client.get('/allocation-rules/calculate', { params: { amount } }).then(r => r.data)
+
+// Accounts
+export const getAccounts = () => client.get('/accounts').then(r => r.data)
+export const getAccount = (id) => client.get(`/accounts/${id}`).then(r => r.data)
+export const createAccount = (data) => client.post('/accounts', data).then(r => r.data)
+export const updateAccount = (id, data) => client.patch(`/accounts/${id}`, data).then(r => r.data)
+export const deleteAccount = (id) => client.delete(`/accounts/${id}`)
+
+// Transfers
+export const createTransfer = (data) => client.post('/accounts/transfer', data).then(r => r.data)
+export const getTransfers = () => client.get('/accounts/transfers/list').then(r => r.data)

@@ -82,6 +82,12 @@ async def get_budget(budget_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("", response_model=BudgetResponse, status_code=status.HTTP_201_CREATED)
 async def create_budget(data: BudgetCreate, db: AsyncSession = Depends(get_db)):
+    if data.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget amount must be greater than 0"
+        )
+
     existing = await db.execute(
         select(Budget).where(
             Budget.category_id == data.category_id,
@@ -111,6 +117,12 @@ async def create_budget(data: BudgetCreate, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/{budget_id}", response_model=BudgetResponse)
 async def update_budget(budget_id: int, data: BudgetUpdate, db: AsyncSession = Depends(get_db)):
+    if data.amount is not None and data.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget amount must be greater than 0"
+        )
+
     result = await db.execute(
         select(Budget)
         .options(selectinload(Budget.category))

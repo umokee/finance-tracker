@@ -86,6 +86,14 @@ body {
   border-color: var(--accent);
 }
 
+.command-bar__balance {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+}
+
 .main-content {
   flex: 1;
   padding: 1.5rem;
@@ -793,4 +801,160 @@ body {
 .allocation-breakdown__amount {
   color: var(--accent);
   font-weight: 500;
+}
+
+/* Account List */
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+}
+
+.account-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.account-item__name {
+  color: var(--text-primary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.account-item__type {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+
+.account-item__balance {
+  font-weight: 600;
+  font-size: 1rem;
+  min-width: 100px;
+  text-align: right;
+}
+
+.account-item__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.badge--primary {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-size: 0.6rem;
+  padding: 0.15rem 0.35rem;
+}
+
+/* Account Widget for Dashboard */
+.account-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.account-widget__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-left: 2px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+}
+
+.account-widget__item--checking {
+  border-left-color: var(--accent);
+}
+
+.account-widget__item--savings {
+  border-left-color: var(--warning);
+}
+
+.account-widget__item--cash {
+  border-left-color: var(--text-secondary);
+}
+
+.account-widget__name {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.account-widget__balance {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Budget Widget for Dashboard */
+.budget-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.budget-widget__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.budget-widget__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.budget-widget__category {
+  color: var(--text-primary);
+}
+
+.budget-widget__amounts {
+  color: var(--text-secondary);
+}
+
+.budget-widget__progress {
+  height: 4px;
+  background-color: var(--bg-primary);
+}
+
+/* Recurring Widget for Dashboard */
+.recurring-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recurring-widget__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--bg-tertiary);
+  font-size: 0.85rem;
+}
+
+.recurring-widget__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.recurring-widget__name {
+  color: var(--text-primary);
+}
+
+.recurring-widget__date {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
 }

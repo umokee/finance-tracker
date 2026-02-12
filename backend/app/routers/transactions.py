@@ -19,18 +19,24 @@ router = APIRouter(dependencies=[Depends(verify_api_key)])
 async def get_transactions(
     type: Optional[TransactionType] = None,
     category_id: Optional[int] = None,
+    account_id: Optional[int] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     limit: int = Query(default=100, le=1000),
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(Transaction).options(selectinload(Transaction.category))
+    query = select(Transaction).options(
+        selectinload(Transaction.category),
+        selectinload(Transaction.account)
+    )
 
     if type:
         query = query.where(Transaction.type == type)
     if category_id:
         query = query.where(Transaction.category_id == category_id)
+    if account_id:
+        query = query.where(Transaction.account_id == account_id)
     if start_date:
         query = query.where(Transaction.date >= start_date)
     if end_date:
@@ -83,7 +89,7 @@ async def get_transaction_summary(
 async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Transaction)
-        .options(selectinload(Transaction.category))
+        .options(selectinload(Transaction.category), selectinload(Transaction.account))
         .where(Transaction.id == transaction_id)
     )
     transaction = result.scalar_one_or_none()
@@ -117,7 +123,7 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
 
     result = await db.execute(
         select(Transaction)
-        .options(selectinload(Transaction.category))
+        .options(selectinload(Transaction.category), selectinload(Transaction.account))
         .where(Transaction.id == transaction.id)
     )
     return result.scalar_one()
@@ -165,7 +171,7 @@ async def update_transaction(transaction_id: int, data: TransactionUpdate, db: A
 
     result = await db.execute(
         select(Transaction)
-        .options(selectinload(Transaction.category))
+        .options(selectinload(Transaction.category), selectinload(Transaction.account))
         .where(Transaction.id == transaction.id)
     )
     return result.scalar_one()

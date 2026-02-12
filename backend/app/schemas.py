@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict
 
-from .models import TransactionType, RecurrenceInterval
+from .models import TransactionType, RecurrenceInterval, AccountType
 
 
 # Category schemas
@@ -30,6 +30,31 @@ class CategoryResponse(CategoryBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Account schemas
+class AccountBase(BaseModel):
+    name: str
+    type: AccountType = AccountType.checking
+
+
+class AccountCreate(AccountBase):
+    pass
+
+
+class AccountUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[AccountType] = None
+    is_default: Optional[bool] = None
+
+
+class AccountResponse(AccountBase):
+    id: int
+    is_default: bool
+    balance: Decimal = Decimal("0.00")
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Transaction schemas
 class TransactionBase(BaseModel):
     amount: Decimal
@@ -37,6 +62,7 @@ class TransactionBase(BaseModel):
     description: Optional[str] = None
     date: date
     category_id: int
+    account_id: Optional[int] = None
 
 
 class TransactionCreate(TransactionBase):
@@ -49,12 +75,14 @@ class TransactionUpdate(BaseModel):
     description: Optional[str] = None
     date: Optional[date] = None
     category_id: Optional[int] = None
+    account_id: Optional[int] = None
 
 
 class TransactionResponse(TransactionBase):
     id: int
     created_at: datetime
     category: CategoryResponse
+    account: Optional[AccountResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -250,3 +278,26 @@ class AllocationCalculation(BaseModel):
     target_id: int
     target_name: str
     amount: Decimal
+
+
+# Transfer schemas
+class TransferCreate(BaseModel):
+    from_account_id: int
+    to_account_id: int
+    amount: Decimal
+    date: Optional[date] = None
+    note: Optional[str] = None
+
+
+class TransferResponse(BaseModel):
+    id: int
+    from_account_id: int
+    to_account_id: int
+    amount: Decimal
+    date: date
+    note: Optional[str]
+    created_at: datetime
+    from_account: AccountResponse
+    to_account: AccountResponse
+
+    model_config = ConfigDict(from_attributes=True)

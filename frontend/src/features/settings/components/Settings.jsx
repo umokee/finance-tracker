@@ -4,6 +4,7 @@ import { updateSetting } from '../../../shared/api/endpoints'
 import { CategoryManager } from './CategoryManager'
 import { RecurringManager } from './RecurringManager'
 import { AllocationManager } from './AllocationManager'
+import { AccountManager } from './AccountManager'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$' },
@@ -65,7 +66,11 @@ export function Settings() {
         </div>
       </div>
 
-      <CategoryManager />
+      <AccountManager />
+
+      <div className="mt-2">
+        <CategoryManager />
+      </div>
 
       <div className="mt-2">
         <RecurringManager />

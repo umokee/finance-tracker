@@ -11,6 +11,8 @@ export function BudgetList() {
   const [editingBudget, setEditingBudget] = useState(null)
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState({ category_id: '', amount: '' })
+  const [formLoading, setFormLoading] = useState(false)
+  const [formError, setFormError] = useState(null)
 
   useEffect(() => {
     loadCategories()
@@ -31,20 +33,28 @@ export function BudgetList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setFormLoading(true)
+    setFormError(null)
+
     const data = {
       category_id: parseInt(formData.category_id),
       amount: parseFloat(formData.amount)
     }
 
-    if (editingBudget) {
-      await update(editingBudget.id, { amount: data.amount })
-    } else {
-      await add(data)
+    try {
+      if (editingBudget) {
+        await update(editingBudget.id, { amount: data.amount })
+      } else {
+        await add(data)
+      }
+      setShowForm(false)
+      setEditingBudget(null)
+      setFormData({ category_id: '', amount: '' })
+    } catch (err) {
+      setFormError(err.response?.data?.detail || 'Failed to save budget')
+    } finally {
+      setFormLoading(false)
     }
-
-    setShowForm(false)
-    setEditingBudget(null)
-    setFormData({ category_id: '', amount: '' })
   }
 
   const handleEdit = (budget) => {
@@ -84,6 +94,7 @@ export function BudgetList() {
             </h2>
           </div>
           <form className="form" onSubmit={handleSubmit}>
+            {formError && <div className="error">{formError}</div>}
             {!editingBudget && (
               <div className="form-group">
                 <label className="form-label" htmlFor="category">Category</label>
@@ -93,6 +104,7 @@ export function BudgetList() {
                   value={formData.category_id}
                   onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
                   required
+                  disabled={formLoading}
                 >
                   <option value="">Select category</option>
                   {availableCategories.map(cat => (
@@ -108,20 +120,21 @@ export function BudgetList() {
                 id="amount"
                 type="number"
                 step="0.01"
-                min="0"
+                min="0.01"
                 className="form-input"
                 value={formData.amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                 required
+                disabled={formLoading}
               />
             </div>
 
             <div className="btn-group" style={{ justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn--secondary" onClick={handleCancel}>
+              <button type="button" className="btn btn--secondary" onClick={handleCancel} disabled={formLoading}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn--primary">
-                {editingBudget ? 'Update' : 'Add'}
+              <button type="submit" className="btn btn--primary" disabled={formLoading}>
+                {formLoading ? 'Saving...' : (editingBudget ? 'Update' : 'Add')}
               </button>
             </div>
           </form>

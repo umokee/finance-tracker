@@ -7,16 +7,28 @@ export function GoalItem({ goal, onContribute, onEdit, onDelete }) {
   const [showContribute, setShowContribute] = useState(false)
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const { id, name, target_amount, current_amount, deadline, completed, progress_percent } = goal
 
-  const handleContribute = (e) => {
+  const isOverdue = deadline && !completed && new Date(deadline) < new Date()
+
+  const handleContribute = async (e) => {
     e.preventDefault()
     if (parseFloat(amount) > 0) {
-      onContribute(id, parseFloat(amount), note)
-      setAmount('')
-      setNote('')
-      setShowContribute(false)
+      setLoading(true)
+      setError(null)
+      try {
+        await onContribute(id, parseFloat(amount), note)
+        setAmount('')
+        setNote('')
+        setShowContribute(false)
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Failed to contribute')
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -35,8 +47,8 @@ export function GoalItem({ goal, onContribute, onEdit, onDelete }) {
             {completed && '[DONE] '}{name}
           </div>
           {deadline && (
-            <div className="goal-item__deadline">
-              Due: {formatDate(deadline)}
+            <div className={`goal-item__deadline ${isOverdue ? 'text-expense' : ''}`}>
+              {isOverdue ? 'OVERDUE: ' : 'Due: '}{formatDate(deadline)}
             </div>
           )}
         </div>
@@ -77,18 +89,20 @@ export function GoalItem({ goal, onContribute, onEdit, onDelete }) {
 
       {showContribute && (
         <form className="form mt-2" onSubmit={handleContribute}>
+          {error && <div className="error">{error}</div>}
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Amount</label>
               <input
                 type="number"
                 step="0.01"
-                min="0"
+                min="0.01"
                 className="form-input"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
                 required
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -99,15 +113,16 @@ export function GoalItem({ goal, onContribute, onEdit, onDelete }) {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Contribution note"
+                disabled={loading}
               />
             </div>
           </div>
           <div className="btn-group">
-            <button type="button" className="btn btn--secondary" onClick={() => setShowContribute(false)}>
+            <button type="button" className="btn btn--secondary" onClick={() => setShowContribute(false)} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" className="btn btn--primary">
-              Contribute
+            <button type="submit" className="btn btn--primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Contribute'}
             </button>
           </div>
         </form>

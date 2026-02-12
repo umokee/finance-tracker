@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useGoals } from '../hooks/useGoals'
+import { useBalance } from '../../../contexts/BalanceContext'
 import { GoalItem } from './GoalItem'
 
 export function GoalsList() {
   const { goals, loading, error, add, update, remove, contribute } = useGoals()
+  const { refresh: refreshBalance } = useBalance()
   const [showForm, setShowForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
   const [formData, setFormData] = useState({
@@ -11,24 +13,34 @@ export function GoalsList() {
     target_amount: '',
     deadline: ''
   })
+  const [formLoading, setFormLoading] = useState(false)
+  const [formError, setFormError] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setFormLoading(true)
+    setFormError(null)
+
     const data = {
       name: formData.name,
       target_amount: parseFloat(formData.target_amount),
       deadline: formData.deadline || null
     }
 
-    if (editingGoal) {
-      await update(editingGoal.id, data)
-    } else {
-      await add(data)
+    try {
+      if (editingGoal) {
+        await update(editingGoal.id, data)
+      } else {
+        await add(data)
+      }
+      setShowForm(false)
+      setEditingGoal(null)
+      setFormData({ name: '', target_amount: '', deadline: '' })
+    } catch (err) {
+      setFormError(err.response?.data?.detail || 'Failed to save goal')
+    } finally {
+      setFormLoading(false)
     }
-
-    setShowForm(false)
-    setEditingGoal(null)
-    setFormData({ name: '', target_amount: '', deadline: '' })
   }
 
   const handleEdit = (goal) => {
@@ -49,6 +61,7 @@ export function GoalsList() {
 
   const handleContribute = async (id, amount, note) => {
     await contribute(id, amount, note)
+    refreshBalance()
   }
 
   const handleCancel = () => {
@@ -79,6 +92,7 @@ export function GoalsList() {
             </h2>
           </div>
           <form className="form" onSubmit={handleSubmit}>
+            {formError && <div className="error">{formError}</div>}
             <div className="form-group">
               <label className="form-label" htmlFor="name">Goal Name</label>
               <input
@@ -89,6 +103,7 @@ export function GoalsList() {
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Emergency Fund"
                 required
+                disabled={formLoading}
               />
             </div>
 
@@ -99,11 +114,12 @@ export function GoalsList() {
                   id="target"
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.01"
                   className="form-input"
                   value={formData.target_amount}
                   onChange={(e) => setFormData(prev => ({ ...prev, target_amount: e.target.value }))}
                   required
+                  disabled={formLoading}
                 />
               </div>
 
@@ -115,16 +131,17 @@ export function GoalsList() {
                   className="form-input"
                   value={formData.deadline}
                   onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                  disabled={formLoading}
                 />
               </div>
             </div>
 
             <div className="btn-group" style={{ justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn--secondary" onClick={handleCancel}>
+              <button type="button" className="btn btn--secondary" onClick={handleCancel} disabled={formLoading}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn--primary">
-                {editingGoal ? 'Update' : 'Add'}
+              <button type="submit" className="btn btn--primary" disabled={formLoading}>
+                {formLoading ? 'Saving...' : (editingGoal ? 'Update' : 'Add')}
               </button>
             </div>
           </form>

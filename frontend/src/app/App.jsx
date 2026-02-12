@@ -1,5 +1,8 @@
 import { Routes, Route, NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useSettings } from '../contexts/SettingsContext'
+import { useBalance } from '../contexts/BalanceContext'
+import { formatCurrency } from '../shared/utils/format'
 import { Dashboard } from '../features/dashboard/components/Dashboard'
 import { TransactionList } from '../features/transactions/components/TransactionList'
 import { BudgetList } from '../features/budgets/components/BudgetList'
@@ -10,6 +13,8 @@ import { LoginScreen } from './LoginScreen'
 
 function CommandBar() {
   const { logout } = useAuth()
+  const { currencySymbol } = useSettings()
+  const { balance, loading } = useBalance()
 
   return (
     <header className="command-bar">
@@ -68,6 +73,13 @@ function CommandBar() {
           Logout
         </button>
       </nav>
+      <div className="command-bar__balance">
+        {loading ? '...' : (
+          <span className={balance >= 0 ? 'text-income' : 'text-expense'}>
+            {formatCurrency(balance || 0, currencySymbol)}
+          </span>
+        )}
+      </div>
     </header>
   )
 }

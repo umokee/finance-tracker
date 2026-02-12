@@ -103,6 +103,8 @@ async def delete_recurring_transaction(recurring_id: int, db: AsyncSession = Dep
 
 @router.post("/process", response_model=dict)
 async def process_recurring_transactions(db: AsyncSession = Depends(get_db)):
+    MAX_TRANSACTIONS_PER_CALL = 100
+
     today = date.today()
     result = await db.execute(
         select(RecurringTransaction).where(
@@ -113,8 +115,14 @@ async def process_recurring_transactions(db: AsyncSession = Depends(get_db)):
     recurring_list = result.scalars().all()
 
     created_count = 0
+    limit_reached = False
+
     for recurring in recurring_list:
         while recurring.next_date <= today:
+            if created_count >= MAX_TRANSACTIONS_PER_CALL:
+                limit_reached = True
+                break
+
             transaction = Transaction(
                 amount=recurring.amount,
                 type=recurring.type,
@@ -126,5 +134,12 @@ async def process_recurring_transactions(db: AsyncSession = Depends(get_db)):
             recurring.next_date = get_next_date(recurring.next_date, recurring.interval)
             created_count += 1
 
+        if limit_reached:
+            break
+
     await db.commit()
-    return {"processed": len(recurring_list), "transactions_created": created_count}
+    return {
+        "processed": len(recurring_list),
+        "transactions_created": created_count,
+        "limit_reached": limit_reached
+    }

@@ -21,6 +21,24 @@ class RecurrenceInterval(str, enum.Enum):
     yearly = "yearly"
 
 
+class AccountType(str, enum.Enum):
+    checking = "checking"  # Основной
+    savings = "savings"    # Накопления
+    cash = "cash"          # Наличные
+
+
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    type: Mapped[AccountType] = mapped_column(SQLEnum(AccountType), default=AccountType.checking)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="account")
+
+
 class Category(Base):
     __tablename__ = "categories"
 
@@ -43,9 +61,11 @@ class Transaction(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     date: Mapped[date] = mapped_column(Date, default=date.today)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
+    account_id: Mapped[Optional[int]] = mapped_column(ForeignKey("accounts.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     category: Mapped["Category"] = relationship(back_populates="transactions")
+    account: Mapped[Optional["Account"]] = relationship(back_populates="transactions")
 
 
 class Goal(Base):
@@ -126,3 +146,18 @@ class AllocationRule(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Transfer(Base):
+    __tablename__ = "transfers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    from_account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
+    to_account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    date: Mapped[date] = mapped_column(Date, default=date.today)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    from_account: Mapped["Account"] = relationship(foreign_keys=[from_account_id])
+    to_account: Mapped["Account"] = relationship(foreign_keys=[to_account_id])

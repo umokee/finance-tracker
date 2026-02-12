@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db, async_session
 from .seed import seed_all
-from .routers import categories, transactions, goals, budgets, recurring, analytics, settings, allocation
+from .routers import categories, transactions, goals, budgets, recurring, analytics, settings, allocation, accounts
 
 
 @asynccontextmanager
@@ -37,6 +37,7 @@ app.include_router(recurring.router, prefix="/api/recurring", tags=["recurring"]
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(allocation.router, prefix="/api/allocation-rules", tags=["allocation"])
+app.include_router(accounts.router, prefix="/api/accounts", tags=["accounts"])
 
 
 @app.get("/api/health")

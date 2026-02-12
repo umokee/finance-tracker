@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from .models import Category, TransactionType, Settings
+from .models import Category, TransactionType, Settings, Account, AccountType
 
 
 DEFAULT_CATEGORIES = [
@@ -50,6 +50,22 @@ async def seed_settings(db: AsyncSession):
     await db.commit()
 
 
+async def seed_accounts(db: AsyncSession):
+    result = await db.execute(select(Account).limit(1))
+    if result.scalar_one_or_none() is not None:
+        return
+
+    # Create default account
+    default_account = Account(
+        name="Main Account",
+        type=AccountType.checking,
+        is_default=True
+    )
+    db.add(default_account)
+    await db.commit()
+
+
 async def seed_all(db: AsyncSession):
     await seed_categories(db)
     await seed_settings(db)
+    await seed_accounts(db)

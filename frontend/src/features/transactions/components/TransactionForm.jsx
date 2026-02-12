@@ -1,23 +1,27 @@
 import { useState, useEffect } from 'react'
-import { getCategories, calculateAllocation } from '../../../shared/api/endpoints'
+import { getCategories, calculateAllocation, getAccounts } from '../../../shared/api/endpoints'
 import { useSettings } from '../../../contexts/SettingsContext'
 import { formatCurrency } from '../../../shared/utils/format'
 
 export function TransactionForm({ transaction, onSubmit, onCancel }) {
   const { currencySymbol } = useSettings()
   const [categories, setCategories] = useState([])
+  const [accounts, setAccounts] = useState([])
   const [formData, setFormData] = useState({
     amount: '',
     type: 'expense',
     description: '',
     date: new Date().toISOString().split('T')[0],
-    category_id: ''
+    category_id: '',
+    account_id: ''
   })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [allocations, setAllocations] = useState([])
 
   useEffect(() => {
     loadCategories()
+    loadAccounts()
   }, [])
 
   useEffect(() => {
@@ -27,20 +31,23 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
         type: transaction.type,
         description: transaction.description || '',
         date: transaction.date,
-        category_id: transaction.category_id
+        category_id: transaction.category_id,
+        account_id: transaction.account_id || ''
       })
     } else {
       // Reset form when switching from edit to add mode
       const expenseCategories = categories.filter(c => c.type === 'expense')
+      const defaultAccount = accounts.find(a => a.is_default)
       setFormData({
         amount: '',
         type: 'expense',
         description: '',
         date: new Date().toISOString().split('T')[0],
-        category_id: expenseCategories.length > 0 ? expenseCategories[0].id : ''
+        category_id: expenseCategories.length > 0 ? expenseCategories[0].id : '',
+        account_id: defaultAccount ? defaultAccount.id : ''
       })
     }
-  }, [transaction, categories])
+  }, [transaction, categories, accounts])
 
   const loadCategories = async () => {
     try {
@@ -54,6 +61,21 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
       }
     } catch (err) {
       console.error('Failed to load categories:', err)
+    }
+  }
+
+  const loadAccounts = async () => {
+    try {
+      const data = await getAccounts()
+      setAccounts(data)
+      if (!transaction && data.length > 0) {
+        const defaultAccount = data.find(a => a.is_default)
+        if (defaultAccount) {
+          setFormData(prev => ({ ...prev, account_id: defaultAccount.id }))
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load accounts:', err)
     }
   }
 
@@ -75,7 +97,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
       }
     }
 
-    const timer = setTimeout(loadAllocations, 300)
+    const timer = setTimeout(loadAllocations, 100)
     return () => clearTimeout(timer)
   }, [formData.type, formData.amount])
 
@@ -93,12 +115,16 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
     try {
       await onSubmit({
         ...formData,
         amount: parseFloat(formData.amount),
-        category_id: parseInt(formData.category_id)
+        category_id: parseInt(formData.category_id),
+        account_id: formData.account_id ? parseInt(formData.account_id) : null
       })
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to save transaction')
     } finally {
       setLoading(false)
     }
@@ -106,6 +132,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
 
   return (
     <form className="form" onSubmit={handleSubmit}>
+      {error && <div className="error">{error}</div>}
       <div className="form-group">
         <label className="form-label">Type</label>
         <div className="btn-group">
@@ -133,7 +160,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
             id="amount"
             type="number"
             step="0.01"
-            min="0"
+            min="0.01"
             className="form-input"
             value={formData.amount}
             onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
@@ -154,20 +181,37 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
         </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label" htmlFor="category">Category</label>
-        <select
-          id="category"
-          className="form-select"
-          value={formData.category_id}
-          onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
-          required
-        >
-          <option value="">Select category</option>
-          {filteredCategories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label" htmlFor="category">Category</label>
+          <select
+            id="category"
+            className="form-select"
+            value={formData.category_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
+            required
+          >
+            <option value="">Select category</option>
+            {filteredCategories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="account">Account</label>
+          <select
+            id="account"
+            className="form-select"
+            value={formData.account_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, account_id: e.target.value }))}
+          >
+            <option value="">No account</option>
+            {accounts.map(acc => (
+              <option key={acc.id} value={acc.id}>{acc.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="form-group">
