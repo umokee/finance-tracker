@@ -207,3 +207,44 @@ class SettingResponse(BaseModel):
 
 class SettingUpdate(BaseModel):
     value: str
+
+
+# Allocation Rule schemas
+class AllocationRuleBase(BaseModel):
+    name: str
+    percentage: int
+    target_type: str  # "goal" or "category"
+    target_id: int
+
+
+class AllocationRuleCreate(AllocationRuleBase):
+    pass
+
+
+class AllocationRuleUpdate(BaseModel):
+    name: Optional[str] = None
+    percentage: Optional[int] = None
+    target_type: Optional[str] = None
+    target_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class AllocationRuleResponse(AllocationRuleBase):
+    id: int
+    is_active: bool
+    sort_order: int
+    created_at: datetime
+    target_name: str = ""
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AllocationCalculation(BaseModel):
+    rule_id: int
+    rule_name: str
+    percentage: int
+    target_type: str
+    target_id: int
+    target_name: str
+    amount: Decimal

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
-import { getCategories } from '../../../shared/api/endpoints'
+import { getCategories, calculateAllocation } from '../../../shared/api/endpoints'
+import { useSettings } from '../../../contexts/SettingsContext'
+import { formatCurrency } from '../../../shared/utils/format'
 
 export function TransactionForm({ transaction, onSubmit, onCancel }) {
+  const { currencySymbol } = useSettings()
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState({
     amount: '',
@@ -11,6 +14,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
     category_id: ''
   })
   const [loading, setLoading] = useState(false)
+  const [allocations, setAllocations] = useState([])
 
   useEffect(() => {
     loadCategories()
@@ -54,6 +58,26 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
   }
 
   const filteredCategories = categories.filter(c => c.type === formData.type)
+
+  useEffect(() => {
+    const loadAllocations = async () => {
+      const amount = parseFloat(formData.amount)
+      if (formData.type === 'income' && amount > 0) {
+        try {
+          const data = await calculateAllocation(amount)
+          setAllocations(data)
+        } catch (err) {
+          console.error('Failed to load allocations:', err)
+          setAllocations([])
+        }
+      } else {
+        setAllocations([])
+      }
+    }
+
+    const timer = setTimeout(loadAllocations, 300)
+    return () => clearTimeout(timer)
+  }, [formData.type, formData.amount])
 
   const handleTypeChange = (type) => {
     setFormData(prev => {
@@ -157,6 +181,22 @@ export function TransactionForm({ transaction, onSubmit, onCancel }) {
           placeholder="Optional description"
         />
       </div>
+
+      {formData.type === 'income' && allocations.length > 0 && (
+        <div className="allocation-breakdown">
+          <div className="allocation-breakdown__header">SUGGESTED ALLOCATION</div>
+          <div className="allocation-breakdown__list">
+            {allocations.map(alloc => (
+              <div key={alloc.rule_id} className="allocation-breakdown__item">
+                <span className="allocation-breakdown__percentage">{alloc.percentage}%</span>
+                <span className="allocation-breakdown__arrow">→</span>
+                <span className="allocation-breakdown__name">{alloc.target_name}</span>
+                <span className="allocation-breakdown__amount">{formatCurrency(alloc.amount, currencySymbol)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="btn-group" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn--secondary" onClick={onCancel}>

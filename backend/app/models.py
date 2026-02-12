@@ -113,3 +113,16 @@ class Settings(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(100), unique=True)
     value: Mapped[str] = mapped_column(Text)
+
+
+class AllocationRule(Base):
+    __tablename__ = "allocation_rules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    percentage: Mapped[int] = mapped_column()
+    target_type: Mapped[str] = mapped_column(String(20))  # "goal" or "category"
+    target_id: Mapped[int] = mapped_column()
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

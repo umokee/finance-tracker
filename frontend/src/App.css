@@ -697,3 +697,100 @@ body {
   margin-top: 0.5rem;
   text-align: right;
 }
+
+/* Allocation Rules */
+.allocation-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.allocation-rule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+}
+
+.allocation-rule-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.allocation-rule-percentage {
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 3rem;
+}
+
+.allocation-rule-arrow {
+  color: var(--text-muted);
+}
+
+.allocation-rule-name {
+  color: var(--text-primary);
+}
+
+.allocation-rule-target {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.allocation-total {
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+/* Allocation Breakdown (in TransactionForm) */
+.allocation-breakdown {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+}
+
+.allocation-breakdown__header {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.allocation-breakdown__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.allocation-breakdown__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.allocation-breakdown__percentage {
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 2.5rem;
+}
+
+.allocation-breakdown__arrow {
+  color: var(--text-muted);
+}
+
+.allocation-breakdown__name {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.allocation-breakdown__amount {
+  color: var(--accent);
+  font-weight: 500;
+}

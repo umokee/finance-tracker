@@ -3,6 +3,7 @@ import { useSettings } from '../../../contexts/SettingsContext'
 import { updateSetting } from '../../../shared/api/endpoints'
 import { CategoryManager } from './CategoryManager'
 import { RecurringManager } from './RecurringManager'
+import { AllocationManager } from './AllocationManager'
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$' },
@@ -68,6 +69,10 @@ export function Settings() {
 
       <div className="mt-2">
         <RecurringManager />
+      </div>
+
+      <div className="mt-2">
+        <AllocationManager />
       </div>
     </div>
   )

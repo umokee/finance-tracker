@@ -43,3 +43,10 @@ export const getDailySpending = (params) => client.get('/analytics/daily-spendin
 // Settings
 export const getSettings = () => client.get('/settings').then(r => r.data)
 export const updateSetting = (key, value) => client.put(`/settings/${key}`, { value }).then(r => r.data)
+
+// Allocation Rules
+export const getAllocationRules = () => client.get('/allocation-rules').then(r => r.data)
+export const createAllocationRule = (data) => client.post('/allocation-rules', data).then(r => r.data)
+export const updateAllocationRule = (id, data) => client.patch(`/allocation-rules/${id}`, data).then(r => r.data)
+export const deleteAllocationRule = (id) => client.delete(`/allocation-rules/${id}`)
+export const calculateAllocation = (amount) => client.get('/allocation-rules/calculate', { params: { amount } }).then(r => r.data)
