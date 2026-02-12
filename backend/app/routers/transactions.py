@@ -10,6 +10,7 @@ from ..database import get_db
 from ..models import Transaction, TransactionType
 from ..schemas import TransactionCreate, TransactionUpdate, TransactionResponse, TransactionSummary
 from ..auth import verify_api_key
+from ..balance import get_available_balance
 
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
@@ -93,6 +94,22 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
 
 @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends(get_db)):
+    # Validate amount
+    if data.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0"
+        )
+
+    # Check balance for expense
+    if data.type == TransactionType.expense:
+        available = await get_available_balance(db)
+        if data.amount > available:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Insufficient balance. Available: {available}, requested: {data.amount}"
+            )
+
     transaction = Transaction(**data.model_dump())
     db.add(transaction)
     await db.commit()
@@ -112,6 +129,32 @@ async def update_transaction(transaction_id: int, data: TransactionUpdate, db: A
     transaction = result.scalar_one_or_none()
     if not transaction:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    # Validate amount if provided
+    if data.amount is not None and data.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0"
+        )
+
+    # Check balance for expense updates
+    new_type = data.type if data.type is not None else transaction.type
+    new_amount = data.amount if data.amount is not None else transaction.amount
+
+    if new_type == TransactionType.expense:
+        available = await get_available_balance(db)
+        # Add back current transaction amount if it was expense (we're modifying it)
+        if transaction.type == TransactionType.expense:
+            available += transaction.amount
+        # Subtract if it was income (we're losing that income)
+        elif transaction.type == TransactionType.income:
+            available -= transaction.amount
+
+        if new_amount > available:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Insufficient balance. Available: {available}, requested: {new_amount}"
+            )
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -134,6 +177,16 @@ async def delete_transaction(transaction_id: int, db: AsyncSession = Depends(get
     transaction = result.scalar_one_or_none()
     if not transaction:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    # Check if deleting income would cause negative balance
+    if transaction.type == TransactionType.income:
+        available = await get_available_balance(db)
+        balance_after_delete = available - transaction.amount
+        if balance_after_delete < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot delete this income. It would cause negative balance: {balance_after_delete}"
+            )
 
     await db.delete(transaction)
     await db.commit()

@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from ..database import get_db
-from ..models import Transaction, TransactionType, Goal, Budget, Category
+from ..models import Transaction, TransactionType, Goal, GoalContribution, Budget, Category
 from ..schemas import OverviewResponse, CategorySpending, TrendPoint, DailySpending
 from ..auth import verify_api_key
+from ..balance import get_available_balance
 
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
@@ -50,6 +51,15 @@ async def get_overview(
     goals_result = await db.execute(goals_query)
     active_goals = goals_result.scalar()
 
+    # Total in goals (contributions)
+    contributions_result = await db.execute(
+        select(func.coalesce(func.sum(GoalContribution.amount), 0))
+    )
+    total_in_goals = Decimal(str(contributions_result.scalar()))
+
+    # Available balance = income - expense - contributions
+    available_balance = total_income - total_expense - total_in_goals
+
     budgets_over = 0
     budget_query = select(Budget).where(
         Budget.month == date.today().month,
@@ -72,6 +82,8 @@ async def get_overview(
         total_income=total_income,
         total_expense=total_expense,
         balance=total_income - total_expense,
+        available_balance=available_balance,
+        total_in_goals=total_in_goals,
         transaction_count=count_result.scalar(),
         active_goals=active_goals,
         budgets_over_limit=budgets_over

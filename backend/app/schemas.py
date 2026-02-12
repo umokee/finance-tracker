@@ -176,6 +176,8 @@ class OverviewResponse(BaseModel):
     total_income: Decimal
     total_expense: Decimal
     balance: Decimal
+    available_balance: Decimal
+    total_in_goals: Decimal
     transaction_count: int
     active_goals: int
     budgets_over_limit: int

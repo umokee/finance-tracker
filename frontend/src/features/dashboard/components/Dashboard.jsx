@@ -60,17 +60,17 @@ export function Dashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">Balance</div>
-          <div className={`stat-card__value ${
-            (overview?.balance || 0) >= 0 ? 'stat-card__value--income' : 'stat-card__value--expense'
-          }`}>
-            {formatCurrency(overview?.balance || 0, currencySymbol)}
+          <div className="stat-card__label">In Goals</div>
+          <div className="stat-card__value stat-card__value--neutral">
+            {formatCurrency(overview?.total_in_goals || 0, currencySymbol)}
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">Transactions</div>
-          <div className="stat-card__value stat-card__value--neutral">
-            {overview?.transaction_count || 0}
+          <div className="stat-card__label">Available</div>
+          <div className={`stat-card__value ${
+            (overview?.available_balance || 0) >= 0 ? 'stat-card__value--income' : 'stat-card__value--expense'
+          }`}>
+            {formatCurrency(overview?.available_balance || 0, currencySymbol)}
           </div>
         </div>
       </div>
@@ -81,6 +81,16 @@ export function Dashboard() {
             <h2 className="card__title">Quick Stats</h2>
           </div>
           <div>
+            <div className="flex-between mb-1">
+              <span className="text-muted">Balance (Income - Expenses)</span>
+              <span className={(overview?.balance || 0) >= 0 ? 'text-income' : 'text-expense'}>
+                {formatCurrency(overview?.balance || 0, currencySymbol)}
+              </span>
+            </div>
+            <div className="flex-between mb-1">
+              <span className="text-muted">Transactions</span>
+              <span>{overview?.transaction_count || 0}</span>
+            </div>
             <div className="flex-between mb-1">
               <span className="text-muted">Active Goals</span>
               <span>{overview?.active_goals || 0}</span>

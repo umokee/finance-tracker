@@ -12,6 +12,7 @@ from ..schemas import (
     GoalContributionCreate, GoalContributionResponse
 )
 from ..auth import verify_api_key
+from ..balance import get_available_balance
 
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
@@ -86,10 +87,31 @@ async def delete_goal(goal_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/{goal_id}/contribute", response_model=GoalResponse)
 async def contribute_to_goal(goal_id: int, data: GoalContributionCreate, db: AsyncSession = Depends(get_db)):
+    # Validate amount
+    if data.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0"
+        )
+
+    # Check available balance
+    available = await get_available_balance(db)
+    if data.amount > available:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient balance. Available: {available}, requested: {data.amount}"
+        )
+
     result = await db.execute(select(Goal).where(Goal.id == goal_id))
     goal = result.scalar_one_or_none()
     if not goal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
+
+    if goal.completed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot contribute to a completed goal"
+        )
 
     contribution = GoalContribution(goal_id=goal_id, amount=data.amount, note=data.note)
     db.add(contribution)

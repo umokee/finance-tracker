@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(nix-shell --run \"cd backend && timeout 10 python -c ''from app.main import app; print\\(\"\"Backend imports OK\"\"\\)''\")"
+      "Bash(nix-shell --run \"cd backend && timeout 10 python -c ''from app.main import app; print\\(\"\"Backend imports OK\"\"\\)''\")",
+      "Bash(nix-shell:*)"
     ]
   }
 }

@@ -2,7 +2,7 @@ from typing import List
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from ..database import get_db
 from ..models import AllocationRule, Goal, Category
@@ -90,6 +90,13 @@ async def get_allocation_rule(rule_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("", response_model=AllocationRuleResponse, status_code=status.HTTP_201_CREATED)
 async def create_allocation_rule(data: AllocationRuleCreate, db: AsyncSession = Depends(get_db)):
+    # Validate percentage
+    if data.percentage <= 0 or data.percentage > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Percentage must be between 1 and 100"
+        )
+
     if data.target_type not in ("goal", "category"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,6 +108,18 @@ async def create_allocation_rule(data: AllocationRuleCreate, db: AsyncSession = 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Target {data.target_type} with id {data.target_id} not found"
+        )
+
+    # Check total percentage won't exceed 100%
+    result = await db.execute(
+        select(func.coalesce(func.sum(AllocationRule.percentage), 0))
+        .where(AllocationRule.is_active == True)
+    )
+    current_total = int(result.scalar())
+    if current_total + data.percentage > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Total allocation would exceed 100%. Current: {current_total}%, adding: {data.percentage}%"
         )
 
     rule = AllocationRule(**data.model_dump())
@@ -118,6 +137,27 @@ async def update_allocation_rule(rule_id: int, data: AllocationRuleUpdate, db: A
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Allocation rule not found")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Validate percentage if provided
+    if "percentage" in update_data:
+        new_percentage = update_data["percentage"]
+        if new_percentage <= 0 or new_percentage > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Percentage must be between 1 and 100"
+            )
+
+        # Check total won't exceed 100%
+        result = await db.execute(
+            select(func.coalesce(func.sum(AllocationRule.percentage), 0))
+            .where(AllocationRule.is_active == True, AllocationRule.id != rule_id)
+        )
+        other_total = int(result.scalar())
+        if other_total + new_percentage > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Total allocation would exceed 100%. Others: {other_total}%, setting: {new_percentage}%"
+            )
 
     if "target_type" in update_data or "target_id" in update_data:
         target_type = update_data.get("target_type", rule.target_type)
