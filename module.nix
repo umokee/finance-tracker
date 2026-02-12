@@ -17,7 +17,6 @@ let
   backendPort = 8001;
   backendHost = "127.0.0.1";
 
-  # IP whitelist
   allowedIPs = [
     "127.0.0.1"
     "178.218.98.184"
@@ -34,6 +33,12 @@ let
   nodeDeps = with pkgs; [
     nodejs
     nodePackages.npm
+  ];
+
+  # Library path for native Python extensions
+  libPath = lib.makeLibraryPath [
+    pkgs.stdenv.cc.cc.lib
+    pkgs.zlib
   ];
 in
 {
@@ -168,6 +173,7 @@ in
         FINANCE_TRACKER_LOG_DIR = logDir;
         FINANCE_TRACKER_LOG_FILE = "app.log";
         PYTHONPATH = projectPath;
+        LD_LIBRARY_PATH = libPath;
       };
 
       path = [
@@ -204,6 +210,8 @@ in
       };
 
       preStart = ''
+        export LD_LIBRARY_PATH="${libPath}"
+
         if [ ! -d ${projectPath} ]; then
           echo "Error: ${projectPath} does not exist"
           exit 1
