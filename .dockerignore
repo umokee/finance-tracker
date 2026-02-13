@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv
+env
+.venv
+.env
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+frontend/dist
+*.log
+
+# Nix
+*.nix
+shell.nix
+result
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker*
+
+# Misc
+.DS_Store
+*.md
+!README.md
+.claude

@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: finance-tracker-backend
+    restart: unless-stopped
+    environment:
+      - FINANCE_API_KEY=${FINANCE_API_KEY}
+      - FINANCE_TRACKER_LOG_DIR=/app/logs
+      - FINANCE_TRACKER_LOG_FILE=app.log
+    volumes:
+      - finance-tracker-data:/app/data
+      - finance-tracker-logs:/app/logs
+    networks:
+      - finance-tracker-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: finance-tracker-frontend
+    restart: unless-stopped
+    ports:
+      - "${PUBLIC_PORT:-8882}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - finance-tracker-net
+
+volumes:
+  finance-tracker-data:
+  finance-tracker-logs:
+
+networks:
+  finance-tracker-net:
+    driver: bridge

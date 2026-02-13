@@ -9,7 +9,7 @@
 let
   enable = helpers.hasIn "services" "finance-tracker";
 
-  gitRepo = "https://github.com/user/finance-tracker.git";
+  gitRepo = "https://github.com/umokee/finance-tracker.git";
   gitBranch = "main";
 
   domain = "finance.umkcloud.xyz";
